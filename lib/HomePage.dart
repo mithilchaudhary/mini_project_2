@@ -138,7 +138,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ));
     return Scaffold(
-        resizeToAvoidBottomPadding: false,
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           centerTitle: true,
           title: Text(

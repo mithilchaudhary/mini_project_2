@@ -43,13 +43,14 @@ class _SignedInState extends State<SignedIn> {
 
       //Bottom Navigation Bar.
       bottomNavigationBar: FloatingNavbar(
+        iconSize: 15,
         backgroundColor: Colors.red[800],
         onTap: (int val) => setState(() => _index = val),
         currentIndex: _index,
         //Content for Bottom Navigation Bar.
         items: [
           FloatingNavbarItem(icon: Icons.map, title: 'Maps'),
-          FloatingNavbarItem(icon: Icons.search, title: 'Add Friends'),
+          FloatingNavbarItem(icon: Icons.search, title: 'Search'),
           FloatingNavbarItem(icon: Icons.chat_bubble_outline, title: 'Chat'),
           FloatingNavbarItem(icon: Icons.settings, title: 'Settings'),
         ],

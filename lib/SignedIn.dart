@@ -26,7 +26,7 @@ class _SignedInState extends State<SignedIn> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          'meetup',
+          'Meetup',
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.red[800],

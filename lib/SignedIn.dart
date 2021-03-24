@@ -24,7 +24,6 @@ class _SignedInState extends State<SignedIn> {
     final tabs = [Maps(), AddFriends(), Chat(), Settings()];
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
         title: Text(
           'Meetup',
           style: TextStyle(color: Colors.white),

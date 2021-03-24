@@ -13,16 +13,18 @@ class _MapsState extends State<Maps> {
   double longitudedata;
 
   //List of markers for all the friends.
-  Set<Marker> _markers = {};
+  List<Marker> _markers = [];
 
   @override
   void initState() {
     super.initState();
     getCurrentLocation();
     getAllFriends();
+    getCenterLocation();
+    getSearchRadius();
   }
 
-  getCurrentLocation() async {
+  Future<void> getCurrentLocation() async {
     final geoposition = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
 
@@ -35,7 +37,7 @@ class _MapsState extends State<Maps> {
   getAllFriends() {
     setState(() {
       //Fake sample data, should be replaced with data provided by addFriendsPage(mithil).
-      _markers = {
+      _markers = [
         Marker(
             markerId: MarkerId('val-2'),
             position: LatLng(19.11969264069933, 72.90916799688964),
@@ -47,9 +49,58 @@ class _MapsState extends State<Maps> {
         Marker(
             markerId: MarkerId('val-4'),
             position: LatLng(19.120665789310753, 72.87861227234882),
-            infoWindow: InfoWindow(title: 'Hamaza', snippet: 'just my house'))
-      };
+            infoWindow: InfoWindow(title: 'Hamaza', snippet: 'just my house')),
+        Marker(
+            markerId: MarkerId('val-5'),
+            position: LatLng(19.11081101698239, 72.83717735727085),
+            infoWindow: InfoWindow(title: 'Atharva', snippet: 'just my house')),
+        Marker(
+            markerId: MarkerId('val-5'),
+            position: LatLng(19.09167198459678, 72.88741916764573),
+            infoWindow: InfoWindow(title: 'Atharva', snippet: 'just my house'))
+      ];
     });
+  }
+
+  //finds center location from friends list.
+  LatLng getCenterLocation() {
+    double centLat = 0;
+    double centLong = 0;
+    var n = _markers.length;
+    for (var i = 0; i < n; i++) {
+      centLat += _markers[i].position.latitude;
+      centLong += _markers[i].position.longitude;
+    }
+    centLat /= n;
+    centLong /= n;
+
+    //add center location to markers list for testing, should be deleted later
+    setState(() {
+      _markers.add(Marker(
+          markerId: MarkerId('val-9'),
+          position: LatLng(centLat, centLong),
+          infoWindow: InfoWindow(title: 'Center', snippet: 'home')));
+    });
+    return LatLng(centLat, centLong);
+  }
+
+  //radius of circle from center location to farthest friend.
+  double getSearchRadius() {
+    LatLng _center = getCenterLocation();
+    int n = _markers.length;
+    double radius = 0;
+    for (var i = 0; i < n; i++) {
+      double tempRad = Geolocator.distanceBetween(
+              _center.latitude,
+              _center.longitude,
+              _markers[i].position.latitude,
+              _markers[i].position.longitude)
+          .toDouble();
+      if (tempRad > radius) {
+        radius = tempRad;
+      }
+    }
+    return radius;
   }
 
   GoogleMapController mapController;
@@ -72,13 +123,13 @@ class _MapsState extends State<Maps> {
         backgroundColor: Colors.red[800],
         mini: true,
         onPressed: () {
-          _onMapCreated(mapController);
+          initState();
         },
       ),
       body: GoogleMap(
         zoomControlsEnabled: false,
         onMapCreated: _onMapCreated,
-        markers: _markers,
+        markers: _markers.toSet(),
         initialCameraPosition: CameraPosition(
           target: LatLng(latitudedata, longitudedata),
           zoom: 11.0,

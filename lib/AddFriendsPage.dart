@@ -8,10 +8,6 @@ class AddFriends extends StatefulWidget {
 class _AddFriendsState extends State<AddFriends> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Add Friends'),
-      ),
-    );
+    return Scaffold();
   }
 }

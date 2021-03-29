@@ -1,6 +1,7 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:dio/dio.dart';
 
 class Maps extends StatefulWidget {
   @override
@@ -15,16 +16,19 @@ class _MapsState extends State<Maps> {
   //List of markers for all the friends.
   List<Marker> _markers = [];
 
+  //custom marker for restaurants.
+  BitmapDescriptor resMarker;
+
   @override
   void initState() {
     super.initState();
     getCurrentLocation();
     getAllFriends();
-    getCenterLocation();
-    getSearchRadius();
+    setResMarker();
+    getAllRestaurants();
   }
 
-  Future<void> getCurrentLocation() async {
+  Future<LatLng> getCurrentLocation() async {
     final geoposition = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
 
@@ -32,6 +36,8 @@ class _MapsState extends State<Maps> {
       latitudedata = geoposition.latitude;
       longitudedata = geoposition.longitude;
     });
+
+    return LatLng(latitudedata, longitudedata);
   }
 
   getAllFriends() {
@@ -54,10 +60,6 @@ class _MapsState extends State<Maps> {
             markerId: MarkerId('val-5'),
             position: LatLng(19.11081101698239, 72.83717735727085),
             infoWindow: InfoWindow(title: 'Atharva', snippet: 'just my house')),
-        Marker(
-            markerId: MarkerId('val-5'),
-            position: LatLng(19.09167198459678, 72.88741916764573),
-            infoWindow: InfoWindow(title: 'Atharva', snippet: 'just my house'))
       ];
     });
   }
@@ -67,20 +69,17 @@ class _MapsState extends State<Maps> {
     double centLat = 0;
     double centLong = 0;
     var n = _markers.length;
+
     for (var i = 0; i < n; i++) {
       centLat += _markers[i].position.latitude;
       centLong += _markers[i].position.longitude;
     }
     centLat /= n;
     centLong /= n;
-
-    //add center location to markers list for testing, should be deleted later
-    setState(() {
-      _markers.add(Marker(
-          markerId: MarkerId('val-9'),
-          position: LatLng(centLat, centLong),
-          infoWindow: InfoWindow(title: 'Center', snippet: 'home')));
-    });
+    if (centLat == 0 && centLong == 0) {
+      centLat = latitudedata;
+      centLong = longitudedata;
+    }
     return LatLng(centLat, centLong);
   }
 
@@ -103,6 +102,35 @@ class _MapsState extends State<Maps> {
     return radius;
   }
 
+  getAllRestaurants() async {
+    LatLng center = getCenterLocation();
+
+    // ignore: todo
+    //TODO: send get request using proper parameters
+    var url =
+        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${center.latitude},${center.longitude}&keyword=restaurant&radius=500&type=restaurant&opennow=true&minprice=2&key=AIzaSyA6nnUoGCwJeuKUsnssd8S_PHvCtGOfsA8';
+    var response = await Dio().get(url);
+    var result = response.data['results'];
+
+    for (var i = 0; i < 5; i++) {
+      var restaurant = result[i];
+      _markers.add(Marker(
+        markerId: MarkerId(restaurant['place_id']),
+        position: LatLng(restaurant['geometry']['location']['lat'],
+            restaurant['geometry']['location']['lng']),
+        icon: resMarker,
+        infoWindow: InfoWindow(
+            title: restaurant['name'],
+            snippet: restaurant['rating'].toString()),
+      ));
+    }
+  }
+
+  void setResMarker() async {
+    resMarker = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(), 'assets/cutlery.png');
+  }
+
   GoogleMapController mapController;
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -123,7 +151,7 @@ class _MapsState extends State<Maps> {
         backgroundColor: Colors.red[800],
         mini: true,
         onPressed: () {
-          initState();
+          getAllRestaurants();
         },
       ),
       body: GoogleMap(

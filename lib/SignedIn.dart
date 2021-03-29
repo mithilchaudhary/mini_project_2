@@ -23,20 +23,23 @@ class _SignedInState extends State<SignedIn> {
     //Tablist for Pages.
     final tabs = [Maps(), AddFriends(), Chat(), Settings()];
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Meetup',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.red[800],
-        actions: [
-          IconButton(
-              icon: Icon(Icons.logout),
-              onPressed: () {
-                context.read<AuthenticationService>().signOut();
-              })
-        ],
-      ),
+      appBar: PreferredSize(
+          preferredSize: Size.fromHeight(40),
+          child: AppBar(
+            centerTitle: true,
+            title: Text(
+              'Meetup',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red[800],
+            actions: [
+              IconButton(
+                  icon: Icon(Icons.logout),
+                  onPressed: () {
+                    context.read<AuthenticationService>().signOut();
+                  })
+            ],
+          )),
       //Displaying Tab based on index.
       body: tabs[_index],
 
@@ -48,9 +51,9 @@ class _SignedInState extends State<SignedIn> {
         currentIndex: _index,
         //Content for Bottom Navigation Bar.
         items: [
-          FloatingNavbarItem(icon: Icons.map, title: 'Maps'),
-          FloatingNavbarItem(icon: Icons.search, title: 'Search'),
-          FloatingNavbarItem(icon: Icons.chat_bubble_outline, title: 'Chat'),
+          FloatingNavbarItem(icon: Icons.map_sharp, title: 'Maps'),
+          FloatingNavbarItem(icon: Icons.person_add, title: 'Friends'),
+          FloatingNavbarItem(icon: Icons.chat_bubble, title: 'Chat'),
           FloatingNavbarItem(icon: Icons.settings, title: 'Settings'),
         ],
       ),

@@ -12,16 +12,18 @@ class SignedIn extends StatefulWidget {
 
   SignedIn(this.uid);
   @override
-  _SignedInState createState() => _SignedInState();
+  _SignedInState createState() => _SignedInState(uid);
 }
 
 class _SignedInState extends State<SignedIn> {
+  final String uid;
   int _index = 0;
+  _SignedInState(this.uid);
 
   @override
   Widget build(BuildContext context) {
     //Tablist for Pages.
-    final tabs = [Maps(), Friends(), Chat(), Settings()];
+    final tabs = [Maps(), Friends(uid), Chat(), Settings()];
     return Scaffold(
       appBar: PreferredSize(
           preferredSize: Size.fromHeight(40),

@@ -1,10 +1,13 @@
 import 'dart:ui';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:miniproj2/database_services.dart';
 import 'package:flutter/material.dart';
 
 class Friends extends StatefulWidget {
+  final String uid;
+  Friends(this.uid);
   @override
-  _FriendsState createState() => _FriendsState();
+  _FriendsState createState() => _FriendsState(uid);
 }
 
 class _FriendsState extends State<Friends> {
@@ -12,6 +15,13 @@ class _FriendsState extends State<Friends> {
   String addname;
   String valueText;
   int pendingReq = 0;
+  final String uid;
+  _FriendsState(this.uid);
+  void funcc() async {
+    List<Map<String, dynamic>> m = await DataService(uid).getFriends();
+    DataService(uid).updateLocation(23, 234);
+    print("here" + m.toString());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +50,7 @@ class _FriendsState extends State<Friends> {
             final _formState = _formKey.currentState;
             if (_formState.validate()) {
               _formState.save();
+              funcc();
 
               ///CHECK NAME
             }

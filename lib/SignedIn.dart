@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:miniproj2/authentication_services.dart';
 import 'package:floating_bottom_navigation_bar/floating_bottom_navigation_bar.dart';
 import 'package:miniproj2/MapsPage.dart';
-import 'package:miniproj2/AddFriendsPage.dart';
+import 'package:miniproj2/FriendsPage.dart';
 import 'package:miniproj2/ChatPage.dart';
 import 'package:miniproj2/SettingsPage.dart';
 
@@ -12,16 +12,18 @@ class SignedIn extends StatefulWidget {
 
   SignedIn(this.uid);
   @override
-  _SignedInState createState() => _SignedInState();
+  _SignedInState createState() => _SignedInState(uid);
 }
 
 class _SignedInState extends State<SignedIn> {
+  final String uid;
   int _index = 0;
+  _SignedInState(this.uid);
 
   @override
   Widget build(BuildContext context) {
     //Tablist for Pages.
-    final tabs = [Maps(), AddFriends(), Chat(), Settings()];
+    final tabs = [Maps(), Friends(uid), Chat(), Settings()];
     return Scaffold(
       appBar: PreferredSize(
           preferredSize: Size.fromHeight(40),
@@ -31,7 +33,7 @@ class _SignedInState extends State<SignedIn> {
               'Meetup',
               style: TextStyle(color: Colors.white),
             ),
-            backgroundColor: Colors.red[800],
+            backgroundColor: Colors.cyan,
             actions: [
               IconButton(
                   icon: Icon(Icons.logout),
@@ -46,7 +48,7 @@ class _SignedInState extends State<SignedIn> {
       //Bottom Navigation Bar.
       bottomNavigationBar: FloatingNavbar(
         iconSize: 15,
-        backgroundColor: Colors.red[800],
+        backgroundColor: Colors.cyan,
         onTap: (int val) => setState(() => _index = val),
         currentIndex: _index,
         //Content for Bottom Navigation Bar.

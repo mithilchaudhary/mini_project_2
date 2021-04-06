@@ -17,10 +17,10 @@ class _FriendsState extends State<Friends> {
   int pendingReq = 0;
   final String uid;
   _FriendsState(this.uid);
-  void funcc() async {
+  Future getFrendetails() async {
     List<Map<String, dynamic>> m = await DataService(uid).getFriends();
-    DataService(uid).updateLocation(23, 234);
-    print("here" + m.toString());
+
+    return m;
   }
 
   @override
@@ -50,7 +50,6 @@ class _FriendsState extends State<Friends> {
             final _formState = _formKey.currentState;
             if (_formState.validate()) {
               _formState.save();
-              funcc();
 
               ///CHECK NAME
             }
@@ -103,7 +102,16 @@ class _FriendsState extends State<Friends> {
               style:
                   TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             )),
-          )
+          ),
+          FutureBuilder(
+              future: getFrendetails(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return Text(snapshot.toString());
+                } else {
+                  return CircularProgressIndicator();
+                }
+              }),
         ],
       ),
     );

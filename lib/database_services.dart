@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DataService {
@@ -16,11 +18,9 @@ class DataService {
         .set({'loc': 'hell'});
   }
 
-  //Future<List<Map<String, GeoPoint>>>
   Future<List<Map<String, dynamic>>> getFriends() async {
     List<Map<String, dynamic>> info = [];
-    info.add({"name": "ham"});
-    await _firestore
+    Future<void> f = await _firestore
         .collection('friends')
         .doc('lUb3VEzLQsqxxEhwO3nU')
         .collection('friends')
@@ -32,7 +32,8 @@ class DataService {
           info.add(value.data());
         });
       });
-    });
+      return;
+    }, onError: (e) => print('errr' + e));
     return info;
   }
 }

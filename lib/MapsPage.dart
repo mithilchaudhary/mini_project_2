@@ -148,7 +148,7 @@ class _MapsState extends State<Maps> {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.replay),
-        backgroundColor: Colors.red[800],
+        backgroundColor: Colors.cyan,
         mini: true,
         onPressed: () {
           getAllRestaurants();

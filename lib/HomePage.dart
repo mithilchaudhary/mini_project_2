@@ -139,13 +139,16 @@ class _HomePageState extends State<HomePage> {
         ));
     return Scaffold(
         resizeToAvoidBottomInset: false,
-        appBar: AppBar(
-          centerTitle: true,
-          title: Text(
-            'Home',
-            style: TextStyle(color: Colors.white),
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(40),
+          child: AppBar(
+            centerTitle: true,
+            title: Text(
+              'Social Meetup',
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.cyan,
           ),
-          backgroundColor: Colors.cyan,
         ),
         body: SingleChildScrollView(
           child: Center(
@@ -159,6 +162,9 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
+                        SizedBox(
+                          height: 10,
+                        ),
                         SizedBox(
                           height: 155.0,
                           child: Image.asset(
@@ -181,7 +187,10 @@ class _HomePageState extends State<HomePage> {
                         SizedBox(
                           height: 15.0,
                         ),
-                        fpButton
+                        fpButton,
+                        SizedBox(
+                          height: 45,
+                        )
                       ],
                     ),
                   )),

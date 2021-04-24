@@ -30,7 +30,7 @@ class _SignedInState extends State<SignedIn> {
           child: AppBar(
             centerTitle: true,
             title: Text(
-              'Meetup',
+              'Social Meetup',
               style: TextStyle(color: Colors.white),
             ),
             backgroundColor: Colors.cyan,

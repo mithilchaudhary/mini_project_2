@@ -6,6 +6,7 @@ import 'HomePage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import "package:firebase_core/firebase_core.dart";
 
+//additional-settings page and sign up with confirmation of password
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();

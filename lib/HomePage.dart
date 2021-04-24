@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:miniproj2/authentication_services.dart';
 import 'package:provider/provider.dart';
@@ -10,10 +9,98 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String _email, _password;
+  String _email, _password, _dname;
+  int status = 0;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
+    Future<void> showErrorDialog() async {
+      return showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(
+              'Alert',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: SingleChildScrollView(
+              child: Text(
+                'That Display Name already exists or an account already exists for that email. Please try again.',
+                style: TextStyle(fontSize: 14),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.amber),
+                  ))
+            ],
+          );
+        },
+      );
+    }
+
+    Future<void> showDnameialog() async {
+      return showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(
+              'Enter a Display Name* for your profile',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            content: SingleChildScrollView(
+              child: TextField(
+                onChanged: (value) => _dname = value,
+                decoration: InputDecoration(
+                    contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
+                    hintText: "Display Name",
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(32.0))),
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.red),
+                  )),
+              TextButton(
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.green),
+                  ),
+                  onPressed: () async {
+                    status = await context.read<AuthenticationService>().signUp(
+                        email: _email,
+                        password: _password,
+                        dname: _dname.trim());
+
+                    if (status == 2 || status == 999) {
+                      Navigator.of(context).pop();
+                      showErrorDialog();
+                    }
+                  },
+                  child: Text('OK', style: TextStyle(color: Colors.white)))
+            ],
+          );
+        },
+      );
+    }
+
     final emailField = TextFormField(
       validator: (value) {
         return value.isEmpty ? 'Please provide a valid Email.' : null;
@@ -24,7 +111,7 @@ class _HomePageState extends State<HomePage> {
       obscureText: false,
       decoration: InputDecoration(
           contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
-          hintText: "Email",
+          hintText: "Email*",
           border:
               OutlineInputBorder(borderRadius: BorderRadius.circular(32.0))),
     );
@@ -39,7 +126,7 @@ class _HomePageState extends State<HomePage> {
       obscureText: true,
       decoration: InputDecoration(
           contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
-          hintText: "Password",
+          hintText: "Password*",
           border:
               OutlineInputBorder(borderRadius: BorderRadius.circular(32.0))),
     );
@@ -58,15 +145,15 @@ class _HomePageState extends State<HomePage> {
             ),
             actions: <Widget>[
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  'OK',
-                  style: TextStyle(color: Colors.white),
-                ),
-                style: ButtonStyle(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'OK',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ButtonStyle(
                     backgroundColor:
-                        MaterialStateProperty.all<Color>(Colors.red[800])),
-              )
+                        MaterialStateProperty.all<Color>(Colors.amber),
+                  ))
             ],
           );
         },
@@ -102,7 +189,9 @@ class _HomePageState extends State<HomePage> {
     final fpButton = TextButton(
       onPressed: () {
         final _formState = _formKey.currentState;
+
         _formState.save();
+
         context.read<AuthenticationService>().forgotpass(_email);
       },
       child: Text(
@@ -126,9 +215,7 @@ class _HomePageState extends State<HomePage> {
             final _formState = _formKey.currentState;
             if (_formState.validate()) {
               _formState.save();
-              context
-                  .read<AuthenticationService>()
-                  .signUp(email: _email, password: _password);
+              showDnameialog();
             }
           },
           child: Text(

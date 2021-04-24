@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DataService {
@@ -16,24 +14,5 @@ class DataService {
         .collection('friends')
         .doc('eyHBWGrNoxSMe8cQUqWC')
         .set({'loc': 'hell'});
-  }
-
-  Future<List<Map<String, dynamic>>> getFriends() async {
-    List<Map<String, dynamic>> info = [];
-    Future<void> f = await _firestore
-        .collection('friends')
-        .doc('lUb3VEzLQsqxxEhwO3nU')
-        .collection('friends')
-        .get()
-        .then((QuerySnapshot querySnapshot) {
-      querySnapshot.docs.forEach((element) async {
-        print("hello " + element.id.toString());
-        await _userRef.doc(element.id).get().then((value) {
-          info.add(value.data());
-        });
-      });
-      return;
-    }, onError: (e) => print('errr' + e));
-    return info;
   }
 }

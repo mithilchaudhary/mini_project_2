@@ -14,7 +14,7 @@ class _RequestsState extends State<Requests> {
   Future getDetails() async {
     await FirebaseFirestore.instance
         .collection('friends')
-        .doc('lUb3VEzLQsqxxEhwO3nU')
+        .doc(uid)
         .collection('requests')
         .get()
         .then((QuerySnapshot querSnapshot) {
@@ -32,11 +32,11 @@ class _RequestsState extends State<Requests> {
         itemBuilder: (BuildContext context, int index) {
           return Dismissible(
               direction: DismissDirection.endToStart,
-              onDismissed: (DismissDirection dismissDirection) {
+              onDismissed: (DismissDirection dismissDirection) async {
                 querySnapshot.docs.removeAt(index);
-                FirebaseFirestore.instance
+                await FirebaseFirestore.instance
                     .collection('friends')
-                    .doc('lUb3VEzLQsqxxEhwO3nU')
+                    .doc(uid)
                     .collection('requests')
                     .doc(querySnapshot.docs[index].id)
                     .delete();
@@ -48,32 +48,29 @@ class _RequestsState extends State<Requests> {
               child: Container(
                   height: 40,
                   child: ListTile(
-                    onTap: () => setState(() {
+                    onTap: () async {
                       //user who sent req
-                      FirebaseFirestore.instance
-                          .collection('friends')
-                          .doc(querySnapshot.docs[index].id)
-                          .set({'exists': true});
 
-                      FirebaseFirestore.instance
+                      await FirebaseFirestore.instance
                           .collection('friends')
                           .doc(querySnapshot.docs[index].id)
                           .collection('friends')
-                          .doc('lUb3VEzLQsqxxEhwO3nU')
+                          .doc(uid)
                           .set({'friend': true});
-                      FirebaseFirestore.instance
+                      await FirebaseFirestore.instance
                           .collection('friends')
-                          .doc('lUb3VEzLQsqxxEhwO3nU') //current user
+                          .doc(uid) //current user
                           .collection('friends')
                           .doc(querySnapshot.docs[index].id)
                           .set({'friend': true});
-                      FirebaseFirestore.instance
+                      await FirebaseFirestore.instance
                           .collection('friends')
-                          .doc('lUb3VEzLQsqxxEhwO3nU')
+                          .doc(uid)
                           .collection('requests')
                           .doc(querySnapshot.docs[index].id)
                           .delete();
-                    }),
+                      setState(() {});
+                    },
                     enabled: true,
                     title: Text(
                       querySnapshot.docs[index].data()['dname'],

@@ -15,7 +15,7 @@ class Friends extends StatefulWidget {
 
 class _FriendsState extends State<Friends> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
+  String myname;
   String addname;
   int flag = 0;
   int done = 0;
@@ -30,9 +30,10 @@ class _FriendsState extends State<Friends> {
   String hehe;
 
   Future getDetails() async {
+    await _userRef.doc(uid).get().then((value) => myname = value['dname']);
     await _firestore
         .collection('friends')
-        .doc('lUb3VEzLQsqxxEhwO3nU')
+        .doc(uid)
         .collection('requests')
         .get()
         .then((QuerySnapshot querySnapshot) {
@@ -41,10 +42,10 @@ class _FriendsState extends State<Friends> {
 
     await _firestore
         .collection('friends')
-        .doc('lUb3VEzLQsqxxEhwO3nU')
+        .doc(uid)
         .collection('friends')
         .get()
-        .then((querySnapshot) {
+        .then((querySnapshot) async {
       querySnapshot.docs.forEach((element) async {
         print(element.id);
         await _userRef.doc(element.id).get().then((value) {
@@ -54,7 +55,6 @@ class _FriendsState extends State<Friends> {
           info.add(m);
         });
       });
-
       done = 1;
     });
 
@@ -97,12 +97,33 @@ class _FriendsState extends State<Friends> {
         child: MaterialButton(
           minWidth: MediaQuery.of(context).size.width,
           padding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
-          onPressed: () {
+          onPressed: () async {
             final _formState = _formKey.currentState;
             if (_formState.validate()) {
               _formState.save();
+              Query q = _userRef.where('dname', isEqualTo: addname.trim());
+              await q.get().then((QuerySnapshot qs) async {
+                if (qs.docs.isNotEmpty) {
+                  await _friendsRef
+                      .doc(qs.docs[0].id)
+                      .collection('requests')
+                      .doc(uid)
+                      .set({'dname': myname});
+                  await showDialog(
+                      barrierDismissible: true,
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Request sent successfully',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 13)),
+                        );
+                      });
+                }
+              });
 
               ///CHECK NAME
+
             }
           },
           child: Text(
@@ -162,21 +183,21 @@ class _FriendsState extends State<Friends> {
           itemCount: info.length,
           itemBuilder: (BuildContext context, int index) {
             return Dismissible(
-                onDismissed: (direction) {
+                onDismissed: (direction) async {
                   Map m = info.removeAt(index);
 
                   Query q = _userRef.where('dname', isEqualTo: m['dname']);
-                  q.get().then((QuerySnapshot qsnap) {
-                    _friendsRef
-                        .doc('lUb3VEzLQsqxxEhwO3nU')
+                  await q.get().then((QuerySnapshot qsnap) async {
+                    await _friendsRef
+                        .doc(uid)
                         .collection('friends')
                         .doc(qsnap.docs[0].id)
                         .delete();
                     //friend who got deleted
-                    _friendsRef
+                    await _friendsRef
                         .doc(qsnap.docs[0].id)
                         .collection('friends')
-                        .doc('lUb3VEzLQsqxxEhwO3nU')
+                        .doc(uid)
                         .delete();
                   });
                 },
@@ -250,9 +271,7 @@ class _FriendsState extends State<Friends> {
                           color: Colors.white, fontWeight: FontWeight.bold),
                     )),
                   ),
-                  info.isEmpty
-                      ? fpButton
-                      : Text(info.toString()) //Expanded(child: listofriends()),
+                  info.isEmpty ? fpButton : Expanded(child: listofriends()),
                 ],
               ),
             );

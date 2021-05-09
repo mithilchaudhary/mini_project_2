@@ -54,7 +54,7 @@ class _HomePageState extends State<HomePage> {
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text(
-              'Enter a Display Name* for your profile',
+              'Enter a Display Name for your profile',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
             content: SingleChildScrollView(
@@ -62,7 +62,7 @@ class _HomePageState extends State<HomePage> {
                 onChanged: (value) => _dname = value,
                 decoration: InputDecoration(
                     contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
-                    hintText: "Display Name",
+                    hintText: "Display Name*",
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(32.0))),
               ),
@@ -84,14 +84,14 @@ class _HomePageState extends State<HomePage> {
                         MaterialStateProperty.all<Color>(Colors.green),
                   ),
                   onPressed: () async {
+                    Navigator.of(context).pop();
                     status = await context.read<AuthenticationService>().signUp(
                         email: _email,
                         password: _password,
                         dname: _dname.trim());
                     print(status);
 
-                    if (status == 1) {
-                      Navigator.of(context).pop();
+                    if (status == 0) {
                       showErrorDialog();
                     }
                   },

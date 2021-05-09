@@ -34,29 +34,33 @@ class AuthenticationService {
     await _firebaseAuth.sendPasswordResetEmail(email: email);
   }
 
-  Future<int> signUp({String email, String password, String dname}) async {
-    int f = 0;
+  Future signUp({String email, String password, String dname}) async {
+    int f = 3;
     CollectionReference _userRef =
         FirebaseFirestore.instance.collection('users');
     Query q = _userRef.where('dname', isEqualTo: dname);
-    q.get().then((QuerySnapshot qs) {
-      print(qs.docs.isEmpty);
-      if (qs.docs.isEmpty) {
-        f = 1;
+    await q.get().then((QuerySnapshot qs) {
+      print('empty?' + qs.docs.isEmpty.toString());
+      if (qs.docs.isNotEmpty) {
+        f = 0;
       } else
-        f = 2;
+        f = 1;
     });
-    if (f == 2)
-      return 1;
-    else if (f == 1) {
+    if (f == 0) return 0;
+    if (f == 1) {
       try {
         await _firebaseAuth
             .createUserWithEmailAndPassword(
                 email: email.trim(), password: password.trim())
-            .then((userSignedin) {
-          _userRef.doc(userSignedin.user.uid).set({'dname': dname});
+            .then((userSignedin) async {
+          await _userRef.doc(userSignedin.user.uid).set({'dname': dname});
+          await FirebaseFirestore.instance
+              .collection('friends')
+              .doc(userSignedin.user.uid)
+              .set({'exists': true});
         });
-        return 0;
+
+        return 1;
       } on FirebaseAuthException catch (e) {
         if (e.code == 'weak-password') {
           print('The password provided is too weak.');
@@ -69,7 +73,6 @@ class AuthenticationService {
         print(e);
         return 0;
       }
-      return 0;
     }
   }
 }

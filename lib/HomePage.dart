@@ -88,8 +88,9 @@ class _HomePageState extends State<HomePage> {
                         email: _email,
                         password: _password,
                         dname: _dname.trim());
+                    print(status);
 
-                    if (status == 2 || status == 999) {
+                    if (status == 1) {
                       Navigator.of(context).pop();
                       showErrorDialog();
                     }

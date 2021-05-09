@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class Requests extends StatefulWidget {
@@ -9,6 +10,7 @@ class Requests extends StatefulWidget {
 class _RequestsState extends State<Requests> {
   QuerySnapshot querySnapshot;
   int done = 0;
+  String uid = FirebaseAuth.instance.currentUser.uid;
   Future getDetails() async {
     await FirebaseFirestore.instance
         .collection('friends')
@@ -47,6 +49,24 @@ class _RequestsState extends State<Requests> {
                   height: 40,
                   child: ListTile(
                     onTap: () => setState(() {
+                      //user who sent req
+                      FirebaseFirestore.instance
+                          .collection('friends')
+                          .doc(querySnapshot.docs[index].id)
+                          .set({'exists': true});
+
+                      FirebaseFirestore.instance
+                          .collection('friends')
+                          .doc(querySnapshot.docs[index].id)
+                          .collection('friends')
+                          .doc('lUb3VEzLQsqxxEhwO3nU')
+                          .set({'friend': true});
+                      FirebaseFirestore.instance
+                          .collection('friends')
+                          .doc('lUb3VEzLQsqxxEhwO3nU') //current user
+                          .collection('friends')
+                          .doc(querySnapshot.docs[index].id)
+                          .set({'friend': true});
                       FirebaseFirestore.instance
                           .collection('friends')
                           .doc('lUb3VEzLQsqxxEhwO3nU')

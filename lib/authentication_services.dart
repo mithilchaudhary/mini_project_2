@@ -40,8 +40,8 @@ class AuthenticationService {
         FirebaseFirestore.instance.collection('users');
     Query q = _userRef.where('dname', isEqualTo: dname);
     q.get().then((QuerySnapshot qs) {
-      String hehe = qs.docs[0].data().toString();
-      if (hehe == null) {
+      print(qs.docs.isEmpty);
+      if (qs.docs.isEmpty) {
         f = 1;
       } else
         f = 2;
@@ -70,7 +70,6 @@ class AuthenticationService {
         return 0;
       }
       return 0;
-    } else
-      return 999;
+    }
   }
 }

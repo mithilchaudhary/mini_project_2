@@ -23,7 +23,7 @@ class _SignedInState extends State<SignedIn> {
   @override
   Widget build(BuildContext context) {
     //Tablist for Pages.
-    final tabs = [Maps(), Friends(uid), Chat(), Settings()];
+    final tabs = [Maps(uid), Friends(uid), Chat(), Settings()];
     return Scaffold(
       appBar: PreferredSize(
           preferredSize: Size.fromHeight(40),

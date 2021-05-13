@@ -9,5 +9,6 @@ class DataService {
   Future updateLocation(var latitude, var longitude) async {
     GeoPoint g = new GeoPoint(latitude, longitude);
     await _userRef.doc(uid).update({'loc': g});
+    return null;
   }
 }

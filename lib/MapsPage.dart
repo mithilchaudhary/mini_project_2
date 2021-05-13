@@ -2,13 +2,19 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dio/dio.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'database_services.dart';
 
 class Maps extends StatefulWidget {
+  final String uid;
+  Maps(this.uid);
   @override
-  _MapsState createState() => _MapsState();
+  _MapsState createState() => _MapsState(uid);
 }
 
 class _MapsState extends State<Maps> {
+  _MapsState(this.uid);
+
   //user latitude, longitude
   double latitudedata;
   double longitudedata;
@@ -20,51 +26,65 @@ class _MapsState extends State<Maps> {
   //custom marker for restaurants.
   BitmapDescriptor resMarker;
 
-  int placeChoice = -1;
+  // friends info
+  List<Map> info = [];
 
-  @override
-  void initState() {
-    super.initState();
-    getCurrentLocation();
-    getAllFriends();
-    setResMarker();
-    getAllRestaurants(placeChoice);
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  CollectionReference _userRef = FirebaseFirestore.instance.collection('users');
+
+  int flag = 0;
+  int done = 0;
+  int pendingReq;
+  String uid;
+  String myname;
+
+  int placeChoice = 0;
+
+  Future updateLocation(var latitude, var longitude) async {
+    GeoPoint g = new GeoPoint(latitude, longitude);
+    await _userRef.doc(uid).update({'loc': g});
   }
 
-  Future<LatLng> getCurrentLocation() async {
+  Future getCurrentLocation() async {
     final geoposition = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
 
-    setState(() {
-      latitudedata = geoposition.latitude;
-      longitudedata = geoposition.longitude;
-    });
+    latitudedata = geoposition.latitude;
+    longitudedata = geoposition.longitude;
 
-    return LatLng(latitudedata, longitudedata);
+    await DataService(uid).updateLocation(latitudedata, longitudedata);
+    return null;
   }
 
-  getAllFriends() {
-    setState(() {
-      //Fake sample data, should be replaced with data provided by addFriendsPage(mithil).
-      _friendMarkers = [
-        Marker(
-            markerId: MarkerId('val-2'),
-            position: LatLng(19.11969264069933, 72.90916799688964),
-            infoWindow: InfoWindow(title: 'Nehal', snippet: 'just my house')),
-        Marker(
-            markerId: MarkerId('val-3'),
-            position: LatLng(19.102499403988425, 72.91723608145941),
-            infoWindow: InfoWindow(title: 'Mithil', snippet: 'just my house')),
-        Marker(
-            markerId: MarkerId('val-4'),
-            position: LatLng(19.120665789310753, 72.87861227234882),
-            infoWindow: InfoWindow(title: 'Hamaza', snippet: 'just my house')),
-        Marker(
-            markerId: MarkerId('val-5'),
-            position: LatLng(19.11081101698239, 72.83717735727085),
-            infoWindow: InfoWindow(title: 'Atharva', snippet: 'just my house')),
-      ];
+  Future getDetails() async {
+    await _userRef.doc(uid).get().then((value) => myname = value['dname']);
+    await _firestore
+        .collection('friends')
+        .doc(uid)
+        .collection('friends')
+        .get()
+        .then((querySnapshot) async {
+      querySnapshot.docs.forEach((element) async {
+        await _userRef.doc(element.id).get().then((value) {
+          Map m = {'dname': value.data()['dname'], 'loc': value.data()['loc']};
+          info.add(m);
+        });
+      });
     });
+    return null;
+  }
+
+  Future getAllFriends() async {
+    await getDetails();
+
+    for (int i = 0; i < info.length; i++) {
+      _friendMarkers.add(Marker(
+        markerId: MarkerId(i.toString()),
+        position: LatLng(info[i]['loc'].latitude, info[i]['loc'].longitude),
+        infoWindow: InfoWindow(
+            title: info[i]['dname'], snippet: 'Friend ' + (i + 1).toString()),
+      ));
+    }
   }
 
   //finds center location from friends list.
@@ -86,40 +106,25 @@ class _MapsState extends State<Maps> {
     return LatLng(centLat, centLong);
   }
 
-  //radius of circle from center location to farthest friend.
-  double getSearchRadius() {
-    LatLng _center = getCenterLocation();
-    int n = _resMarkers.length;
-    double radius = 0;
-    for (var i = 0; i < n; i++) {
-      double tempRad = Geolocator.distanceBetween(
-              _center.latitude,
-              _center.longitude,
-              _resMarkers[i].position.latitude,
-              _resMarkers[i].position.longitude)
-          .toDouble();
-      if (tempRad > radius) {
-        radius = tempRad;
-      }
-    }
-    return radius;
+  Future setResMarker() async {
+    resMarker = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(), 'assets/cutlery.png');
   }
 
-  getAllRestaurants(int placeChoice) async {
+  Future getAllRestaurants(int placeChoice) async {
     LatLng center = getCenterLocation();
-
-    // var base =
-    //     'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${center.latitude},${center.longitude}';
+    var base =
+        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${center.latitude},${center.longitude}&';
     var url = '';
     if (placeChoice == 0) {
-      url =
-          'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${center.latitude},${center.longitude}&keyword=restaurant&radius=500&type=restaurant&opennow=true&minprice=2&key=AIzaSyA6nnUoGCwJeuKUsnssd8S_PHvCtGOfsA8';
+      url = base +
+          'keyword=restaurant&radius=500&type=restaurant&opennow=true&minprice=2&key=AIzaSyA6nnUoGCwJeuKUsnssd8S_PHvCtGOfsA8';
     } else if (placeChoice == 1) {
-      url =
-          'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${center.latitude},${center.longitude}&radius=500&type=cafe&key=AIzaSyA6nnUoGCwJeuKUsnssd8S_PHvCtGOfsA8';
+      url = base +
+          'radius=500&type=cafe&key=AIzaSyA6nnUoGCwJeuKUsnssd8S_PHvCtGOfsA8';
     } else if (placeChoice == 2) {
-      url =
-          'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${center.latitude},${center.longitude}&radius=500&type=shopping_mall&key=AIzaSyA6nnUoGCwJeuKUsnssd8S_PHvCtGOfsA8';
+      url = base +
+          'radius=500&type=shopping_mall&key=AIzaSyA6nnUoGCwJeuKUsnssd8S_PHvCtGOfsA8';
     }
 
     var response = await Dio().get(url);
@@ -137,24 +142,16 @@ class _MapsState extends State<Maps> {
     _resMarkers = [];
     for (var i = 0; i < len; i++) {
       var restaurant = result[i];
-      setState(() {
-        _resMarkers.add(Marker(
-          markerId: MarkerId(restaurant['place_id']),
-          position: LatLng(restaurant['geometry']['location']['lat'],
-              restaurant['geometry']['location']['lng']),
-          icon: resMarker,
-          infoWindow: InfoWindow(
-              title: restaurant['name'],
-              snippet: restaurant['rating'].toString()),
-        ));
-      });
+      _resMarkers.add(Marker(
+        markerId: MarkerId(restaurant['place_id']),
+        position: LatLng(restaurant['geometry']['location']['lat'],
+            restaurant['geometry']['location']['lng']),
+        icon: resMarker,
+        infoWindow: InfoWindow(
+            title: restaurant['name'],
+            snippet: restaurant['rating'].toString()),
+      ));
     }
-    print(_resMarkers);
-  }
-
-  void setResMarker() async {
-    resMarker = await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(), 'assets/cutlery.png');
   }
 
   void _onRestaurantPressed() {
@@ -162,8 +159,6 @@ class _MapsState extends State<Maps> {
       placeChoice = 0;
       getAllRestaurants(placeChoice);
     });
-
-    print(placeChoice);
   }
 
   void _onCafePressed() {
@@ -171,8 +166,6 @@ class _MapsState extends State<Maps> {
       placeChoice = 1;
       getAllRestaurants(placeChoice);
     });
-
-    print(placeChoice);
   }
 
   void _onMallPressed() {
@@ -180,14 +173,12 @@ class _MapsState extends State<Maps> {
       placeChoice = 2;
       getAllRestaurants(placeChoice);
     });
-
-    print(placeChoice);
   }
 
   GoogleMapController mapController;
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
-    //Setting user marker when map is created.
+    // Setting user marker when map is created.
     setState(() {
       _friendMarkers.add(Marker(
           markerId: MarkerId('val-1'),
@@ -197,15 +188,6 @@ class _MapsState extends State<Maps> {
   }
 
   Widget button(Function function, IconData icon) {
-    // return FloatingActionButton(
-    //   onPressed: function,
-    //   materialTapTargetSize: MaterialTapTargetSize.padded,
-    //   backgroundColor: Colors.amber,
-    //   child: Icon(
-    //     icon,
-    //     size: 28.0,
-    //   ),
-    // );
     return Transform.scale(
       scale: .85,
       child: FloatingActionButton(
@@ -220,46 +202,63 @@ class _MapsState extends State<Maps> {
     );
   }
 
+  Future myFuture() async {
+    await getCurrentLocation();
+    await getAllFriends();
+    await setResMarker();
+    await getAllRestaurants(placeChoice);
+    done = 1;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.replay),
-          backgroundColor: Colors.cyan,
-          mini: true,
-          onPressed: () {
-            setState(() {});
-          },
-        ),
-        body: Stack(children: <Widget>[
-          GoogleMap(
-            zoomControlsEnabled: false,
-            onMapCreated: _onMapCreated,
-            markers: (_resMarkers + _friendMarkers).toSet(),
-            initialCameraPosition: CameraPosition(
-              target: LatLng(latitudedata, longitudedata),
-              zoom: 11.0,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Align(
-              alignment: Alignment.topRight,
-              child: Column(
-                children: <Widget>[
-                  button(_onRestaurantPressed, Icons.restaurant),
-                  SizedBox(
-                    height: 16.0,
+    return FutureBuilder(
+        future: myFuture(),
+        builder: (context, somedata) {
+          if (done == 1) {
+            return Scaffold(
+                floatingActionButton: FloatingActionButton(
+                  child: Icon(Icons.replay),
+                  backgroundColor: Colors.cyan,
+                  mini: true,
+                  onPressed: () {},
+                ),
+                body: Stack(children: <Widget>[
+                  GoogleMap(
+                    zoomControlsEnabled: false,
+                    onMapCreated: _onMapCreated,
+                    markers: (_resMarkers + _friendMarkers).toSet(),
+                    initialCameraPosition: CameraPosition(
+                      target: LatLng(latitudedata, longitudedata),
+                      zoom: 11.0,
+                    ),
                   ),
-                  button(_onCafePressed, Icons.local_cafe),
-                  SizedBox(
-                    height: 16.0,
-                  ),
-                  button(_onMallPressed, Icons.local_mall),
-                ],
-              ),
-            ),
-          )
-        ]));
+                  Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: Column(
+                        children: <Widget>[
+                          button(_onRestaurantPressed, Icons.restaurant),
+                          SizedBox(
+                            height: 16.0,
+                          ),
+                          button(_onCafePressed, Icons.local_cafe),
+                          SizedBox(
+                            height: 16.0,
+                          ),
+                          button(_onMallPressed, Icons.local_mall),
+                        ],
+                      ),
+                    ),
+                  )
+                ]));
+          } else {
+            return Container(
+                child: Center(
+              child: CircularProgressIndicator(),
+            ));
+          }
+        });
   }
 }

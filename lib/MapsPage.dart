@@ -76,29 +76,15 @@ class _MapsState extends State<Maps> {
 
   Future getAllFriends() async {
     await getDetails();
-    print(info);
-    _friendMarkers = _friendMarkers +
-        [
-          Marker(
-              markerId: MarkerId('val-2'),
-              position: LatLng(19.11969264069933, 72.90916799688964),
-              infoWindow: InfoWindow(title: 'Nehal', snippet: 'just my house')),
-          Marker(
-              markerId: MarkerId('val-3'),
-              position: LatLng(19.102499403988425, 72.91723608145941),
-              infoWindow:
-                  InfoWindow(title: 'Mithil', snippet: 'just my house')),
-          Marker(
-              markerId: MarkerId('val-4'),
-              position: LatLng(19.120665789310753, 72.87861227234882),
-              infoWindow:
-                  InfoWindow(title: 'Hamaza', snippet: 'just my house')),
-          Marker(
-              markerId: MarkerId('val-5'),
-              position: LatLng(19.11081101698239, 72.83717735727085),
-              infoWindow:
-                  InfoWindow(title: 'Atharva', snippet: 'just my house')),
-        ];
+
+    for (int i = 0; i < info.length; i++) {
+      _friendMarkers.add(Marker(
+        markerId: MarkerId(i.toString()),
+        position: LatLng(info[i]['loc'].latitude, info[i]['loc'].longitude),
+        infoWindow: InfoWindow(
+            title: info[i]['dname'], snippet: 'Friend ' + (i + 1).toString()),
+      ));
+    }
   }
 
   //finds center location from friends list.

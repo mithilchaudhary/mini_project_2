@@ -8,7 +8,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  List<MessageModel> messages = new List();
+  List<MessageModel> messages = [];
 
   @override
   void initState() {
@@ -95,7 +95,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   decoration: InputDecoration.collapsed(
                       hintText: "Aa",
                       hintStyle:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
                 ),
               ),
               Container(
@@ -136,7 +136,7 @@ class ChattingTile extends StatelessWidget {
                 topRight: Radius.circular(30),
                 bottomLeft: isByMe ? Radius.circular(30) : Radius.circular(0),
                 bottomRight:
-                isByMe ? Radius.circular(0) : Radius.circular(30))),
+                    isByMe ? Radius.circular(0) : Radius.circular(30))),
         padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         child: Container(
           constraints: BoxConstraints(

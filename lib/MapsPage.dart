@@ -108,7 +108,7 @@ class _MapsState extends State<Maps> {
 
   Future setResMarker() async {
     resMarker = await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(), 'assets/cutlery.png');
+        ImageConfiguration(), 'assets/resnew.png');
   }
 
   Future getAllRestaurants(int placeChoice) async {

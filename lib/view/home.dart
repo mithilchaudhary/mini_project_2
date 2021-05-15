@@ -10,8 +10,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  List<StoryModel> stories = new List();
-  List<ChatModel> chats = new List();
+  List<StoryModel> stories = [];
+  List<ChatModel> chats = [];
 
   @override
   void initState() {
@@ -118,7 +118,7 @@ class _HomeState extends State<Home> {
                               name: chats[index].name,
                               lastMessage: chats[index].lastMessage,
                               haveunreadmessages:
-                              chats[index].haveunreadmessages,
+                                  chats[index].haveunreadmessages,
                               unreadmessages: chats[index].unreadmessages,
                               lastSeenTime: chats[index].lastSeenTime,
                             );
@@ -177,11 +177,11 @@ class ChatTile extends StatelessWidget {
   final String lastSeenTime;
   ChatTile(
       {@required this.unreadmessages,
-        @required this.haveunreadmessages,
-        @required this.lastSeenTime,
-        @required this.lastMessage,
-        @required this.imgUrl,
-        @required this.name});
+      @required this.haveunreadmessages,
+      @required this.lastSeenTime,
+      @required this.lastMessage,
+      @required this.imgUrl,
+      @required this.name});
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -242,19 +242,19 @@ class ChatTile extends StatelessWidget {
                   ),
                   haveunreadmessages
                       ? Container(
-                      width: 30,
-                      height: 30,
-                      alignment: Alignment.center,
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                          color: Color(0xffff410f),
-                          borderRadius: BorderRadius.circular(12)),
-                      child: Text(
-                        "$unreadmessages",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600),
-                      ))
+                          width: 30,
+                          height: 30,
+                          alignment: Alignment.center,
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                              color: Color(0xffff410f),
+                              borderRadius: BorderRadius.circular(12)),
+                          child: Text(
+                            "$unreadmessages",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600),
+                          ))
                       : Container()
                 ],
               ),

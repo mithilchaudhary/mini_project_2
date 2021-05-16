@@ -22,7 +22,6 @@ environment:
 
 dependencies:
     google_maps_flutter: ^0.5.27+3
-
     floating_bottom_navigation_bar: ^1.4.1
     cloud_firestore: ^0.14.4
     provider: ^4.3.2+1
@@ -30,6 +29,8 @@ dependencies:
     firebase_auth: ^0.18.4+1
     geolocator: ^6.1.8
     dio: ^3.0.10
+    dart_numerics: ^0.0.5
+    google_map_polyline: ^0.2.0+1
     flutter:
         sdk: flutter
 

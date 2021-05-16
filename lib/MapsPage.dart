@@ -4,6 +4,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:dio/dio.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'database_services.dart';
+import 'package:dart_numerics/dart_numerics.dart' as numerics;
+import 'package:google_map_polyline/google_map_polyline.dart';
 
 class Maps extends StatefulWidget {
   final String uid;
@@ -26,25 +28,46 @@ class _MapsState extends State<Maps> {
   //custom marker for restaurants.
   BitmapDescriptor resMarker;
 
-  // friends info
+  // friends info from getDetails method(firebase).
   List<Map> info = [];
+  Set<Map> infoSet = new Set();
 
+  //result from distancematrix api
+  var matrix;
+
+  //result from places api(restaurants)
+  var result = [];
+
+  //List and sets for polyline.
+  final Set<Polyline> polyline = {};
+  List<LatLng> routeCoords;
+  GoogleMapPolyline googleMapPolyline =
+      new GoogleMapPolyline(apiKey: "AIzaSyA6nnUoGCwJeuKUsnssd8S_PHvCtGOfsA8");
+
+  //references for firebase requests.
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
   CollectionReference _userRef = FirebaseFirestore.instance.collection('users');
 
-  int flag = 0;
+  //done will be set when all the async fuctions are called. done variable is in widget builder.
   int done = 0;
-  int pendingReq;
+
+  //uid and name of the current user.
   String uid;
   String myname;
 
+  //no of restaurants being displayed on the map.
+  var len;
+
+  //making choice for places. {0: restaurant, 1: cafe, 2:mall}.
   int placeChoice = 0;
 
+  //for updating current user location to database.
   Future updateLocation(var latitude, var longitude) async {
     GeoPoint g = new GeoPoint(latitude, longitude);
     await _userRef.doc(uid).update({'loc': g});
   }
 
+  // for getting current location of user.
   Future getCurrentLocation() async {
     final geoposition = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
@@ -53,9 +76,21 @@ class _MapsState extends State<Maps> {
     longitudedata = geoposition.longitude;
 
     await DataService(uid).updateLocation(latitudedata, longitudedata);
+    // print("111111111111111111111111");
     return null;
   }
 
+  // for filtering dupicates from info list.
+  filterDuplicates() {
+    for (var friend in info) {
+      if (infoSet.any((e) => e['dname'] == friend['dname'])) {
+        continue;
+      }
+      infoSet.add(friend);
+    }
+  }
+
+  //for fetching user's friends from databse.
   Future getDetails() async {
     await _userRef.doc(uid).get().then((value) => myname = value['dname']);
     await _firestore
@@ -71,34 +106,24 @@ class _MapsState extends State<Maps> {
         });
       });
     });
+    filterDuplicates();
+    // print("2222222222222222222222222222222222");
+
     return null;
   }
 
-  Future getAllFriends() async {
-    await getDetails();
-
-    for (int i = 0; i < info.length; i++) {
-      _friendMarkers.add(Marker(
-        markerId: MarkerId(i.toString()),
-        position: LatLng(info[i]['loc'].latitude, info[i]['loc'].longitude),
-        infoWindow: InfoWindow(
-            title: info[i]['dname'], snippet: 'Friend ' + (i + 1).toString()),
-      ));
-    }
-  }
-
-  //finds center location from friends list.
+  //for finding center location out of all friends.
   LatLng getCenterLocation() {
-    double centLat = 0;
-    double centLong = 0;
-    var n = _friendMarkers.length;
+    double centLat = latitudedata;
+    double centLong = longitudedata;
+    var n = infoSet.length;
 
     for (var i = 0; i < n; i++) {
-      centLat += _friendMarkers[i].position.latitude;
-      centLong += _friendMarkers[i].position.longitude;
+      centLat += infoSet.elementAt(i)['loc'].latitude;
+      centLong += infoSet.elementAt(i)['loc'].longitude;
     }
-    centLat /= n;
-    centLong /= n;
+    centLat /= n + 1;
+    centLong /= n + 1;
     if (centLat == 0 && centLong == 0) {
       centLat = latitudedata;
       centLong = longitudedata;
@@ -106,11 +131,7 @@ class _MapsState extends State<Maps> {
     return LatLng(centLat, centLong);
   }
 
-  Future setResMarker() async {
-    resMarker = await BitmapDescriptor.fromAssetImage(
-        ImageConfiguration(), 'assets/resnew.png');
-  }
-
+  //for fetching restaurants from places api.
   Future getAllRestaurants(int placeChoice) async {
     LatLng center = getCenterLocation();
     var base =
@@ -128,8 +149,7 @@ class _MapsState extends State<Maps> {
     }
 
     var response = await Dio().get(url);
-    var result = response.data['results'];
-    var len;
+    result = response.data['results'];
     if (result.length >= 5) {
       len = 5;
     } else if (result.length == 0) {
@@ -152,12 +172,112 @@ class _MapsState extends State<Maps> {
             snippet: restaurant['rating'].toString()),
       ));
     }
+    // print("33333333333333333333333333333333");
   }
 
-  void _onRestaurantPressed() {
+  //for fetching distance details from distancemartrix api.
+  Future getDistanceMatrix() async {
+    var base = 'https://maps.googleapis.com/maps/api/distancematrix/json?';
+    String origins = '&origins=$latitudedata,$longitudedata|';
+    String dest = '&destinations=';
+    String key = '&key=AIzaSyA6nnUoGCwJeuKUsnssd8S_PHvCtGOfsA8';
+
+    int n = infoSet.length;
+
+    for (int i = 0; i < n; i++) {
+      var friend = infoSet.elementAt(i);
+      // print(friend['dname']);
+      origins += '${friend['loc'].latitude},${friend['loc'].longitude}';
+      if (i != n - 1) origins += '|';
+    }
+    for (int i = 0; i < len; i++) {
+      var restaurant = result[i];
+      dest +=
+          '${restaurant['geometry']['location']['lat']},${restaurant['geometry']['location']['lng']}';
+      if (i != len - 1) dest += '|';
+    }
+    // print(len);
+
+    var url = base + origins + dest + key;
+    // print(url);
+    var response = await Dio().get(url);
+    matrix = response.data['rows'];
+    // print(matrix);
+    // print("44444444444444444444444444444444444444");
+  }
+
+  //for finding closest restaurant for any friend.
+  List getClosestResDistance(int index) {
+    int min = numerics.int64MaxValue;
+    int j = -1;
+    var row = matrix[index]['elements'];
+    for (int i = 0; i < len; i++) {
+      if (min > row[i]['distance']['value']) {
+        min = row[i]['distance']['value'];
+        j = i;
+      }
+    }
+    return [result[j]['name'], row[j]['distance']['text']];
+  }
+
+  //for setting friend markers on the map usinf infoSet.
+  Future getAllFriends() async {
+    for (int i = 0; i < infoSet.length; i++) {
+      var friend = infoSet.elementAt(i);
+      var data = getClosestResDistance(i + 1);
+      // print(friend['dname']);
+      _friendMarkers.add(Marker(
+        markerId: MarkerId(i.toString()),
+        position: LatLng(friend['loc'].latitude, friend['loc'].longitude),
+        infoWindow: InfoWindow(
+            title: friend['dname'], snippet: '${data[0]}, ${data[1]}'),
+      ));
+    }
+    // print("5555555555555555555555555555555");
+  }
+
+  //for setting plyline from user to his closest restaurant.
+  Future setPolyline() async {
+    int min = numerics.int64MaxValue;
+    int j = -1;
+    var row = matrix[0]['elements'];
+    for (int i = 0; i < len; i++) {
+      if (min > row[i]['distance']['value']) {
+        min = row[i]['distance']['value'];
+        j = i;
+      }
+      // print(
+      //     '${result[i]['name']}, ${row[i]['distance']['text']},  ${row[i]['duration']['text']}');
+    }
+    routeCoords = await googleMapPolyline.getCoordinatesWithLocation(
+        origin: LatLng(latitudedata, longitudedata),
+        destination: LatLng(result[j]['geometry']['location']['lat'],
+            result[j]['geometry']['location']['lng']),
+        mode: RouteMode.driving);
+
+    polyline.add(Polyline(
+        polylineId: PolylineId('route1'),
+        visible: true,
+        points: routeCoords,
+        width: 4,
+        color: Colors.blue,
+        startCap: Cap.roundCap,
+        endCap: Cap.buttCap));
+  }
+
+  //custom image for restaurant marker.
+  Future setResMarker() async {
+    resMarker = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(), 'assets/resnew.png');
+  }
+
+  void _onRestaurantPressed() async {
     setState(() {
       placeChoice = 0;
       getAllRestaurants(placeChoice);
+      getDistanceMatrix();
+      getAllFriends();
+      setPolyline();
     });
   }
 
@@ -165,6 +285,9 @@ class _MapsState extends State<Maps> {
     setState(() {
       placeChoice = 1;
       getAllRestaurants(placeChoice);
+      getDistanceMatrix();
+      getAllFriends();
+      setPolyline();
     });
   }
 
@@ -172,6 +295,9 @@ class _MapsState extends State<Maps> {
     setState(() {
       placeChoice = 2;
       getAllRestaurants(placeChoice);
+      getDistanceMatrix();
+      getAllFriends();
+      setPolyline();
     });
   }
 
@@ -179,14 +305,16 @@ class _MapsState extends State<Maps> {
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
     // Setting user marker when map is created.
+
     setState(() {
       _friendMarkers.add(Marker(
           markerId: MarkerId('val-1'),
           position: LatLng(latitudedata, longitudedata),
-          infoWindow: InfoWindow(title: 'Chirag', snippet: 'home')));
+          infoWindow: InfoWindow(title: myname, snippet: 'home')));
     });
   }
 
+  //button for changing places.
   Widget button(Function function, IconData icon) {
     return Transform.scale(
       scale: .85,
@@ -204,9 +332,13 @@ class _MapsState extends State<Maps> {
 
   Future myFuture() async {
     await getCurrentLocation();
-    await getAllFriends();
+    await getDetails();
     await setResMarker();
     await getAllRestaurants(placeChoice);
+    await getDistanceMatrix();
+    await getAllFriends();
+    await setPolyline();
+
     done = 1;
   }
 
@@ -227,6 +359,7 @@ class _MapsState extends State<Maps> {
                   GoogleMap(
                     zoomControlsEnabled: false,
                     onMapCreated: _onMapCreated,
+                    polylines: polyline,
                     markers: (_resMarkers + _friendMarkers).toSet(),
                     initialCameraPosition: CameraPosition(
                       target: LatLng(latitudedata, longitudedata),

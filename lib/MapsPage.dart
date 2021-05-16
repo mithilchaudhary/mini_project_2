@@ -314,6 +314,8 @@ class _MapsState extends State<Maps> {
     });
   }
 
+  void _onMeetupPressed() {}
+
   //button for changing places.
   Widget button(Function function, IconData icon) {
     return Transform.scale(
@@ -381,6 +383,17 @@ class _MapsState extends State<Maps> {
                             height: 16.0,
                           ),
                           button(_onMallPressed, Icons.local_mall),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Align(
+                      alignment: Alignment.topLeft,
+                      child: Column(
+                        children: <Widget>[
+                          button(_onMeetupPressed, Icons.face),
                         ],
                       ),
                     ),

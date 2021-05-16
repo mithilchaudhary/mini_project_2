@@ -395,8 +395,17 @@ class _MapsState extends State<Maps> {
                     child: Align(
                       alignment: Alignment.topLeft,
                       child: Column(
-                        children: <Widget>[
-                          button(_onMeetupPressed, Icons.face),
+                        children: [
+                          Transform.scale(
+                            scale: .85,
+                            child: FloatingActionButton.extended(
+                              onPressed: _onMeetupPressed,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.padded,
+                              backgroundColor: Colors.blue,
+                              label: Text('Plan Meet-Up'),
+                            ),
+                          )
                         ],
                       ),
                     ),

@@ -164,6 +164,8 @@ class _MapsState extends State<Maps> {
       len = result.length;
     }
 
+    result = result.sublist(0, len);
+
     _resMarkers = [];
     for (var i = 0; i < len; i++) {
       var restaurant = result[i];
@@ -190,15 +192,14 @@ class _MapsState extends State<Maps> {
     int n = infoSet.length;
 
     for (int i = 0; i < n; i++) {
-      var friend = infoSet.elementAt(i);
+      var friend = infoSet.elementAt(i)['loc'];
       // print(friend['dname']);
-      origins += '${friend['loc'].latitude},${friend['loc'].longitude}';
+      origins += '${friend.latitude},${friend.longitude}';
       if (i != n - 1) origins += '|';
     }
     for (int i = 0; i < len; i++) {
-      var restaurant = result[i];
-      dest +=
-          '${restaurant['geometry']['location']['lat']},${restaurant['geometry']['location']['lng']}';
+      var restaurant = result[i]['geometry']['location'];
+      dest += '${restaurant['lat']},${restaurant['lng']}';
       if (i != len - 1) dest += '|';
     }
     // print(len);
@@ -207,7 +208,7 @@ class _MapsState extends State<Maps> {
     // print(url);
     var response = await Dio().get(url);
     matrix = response.data['rows'];
-    // print(matrix);
+    print(matrix);
     // print("44444444444444444444444444444444444444");
   }
 
@@ -222,6 +223,7 @@ class _MapsState extends State<Maps> {
         j = i;
       }
     }
+
     return [result[j]['name'], row[j]['distance']['text']];
   }
 
@@ -229,6 +231,7 @@ class _MapsState extends State<Maps> {
   Future getAllFriends() async {
     for (int i = 0; i < infoSet.length; i++) {
       var friend = infoSet.elementAt(i);
+
       var data = getClosestResDistance(i + 1);
       // print(friend['dname']);
       _friendMarkers.add(Marker(
@@ -401,8 +404,17 @@ class _MapsState extends State<Maps> {
                     child: Align(
                       alignment: Alignment.topLeft,
                       child: Column(
-                        children: <Widget>[
-                          button(_onMeetupPressed, Icons.face),
+                        children: [
+                          Transform.scale(
+                            scale: .85,
+                            child: FloatingActionButton.extended(
+                              onPressed: _onMeetupPressed,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.padded,
+                              backgroundColor: Colors.blue,
+                              label: Text('Plan Meet-Up'),
+                            ),
+                          )
                         ],
                       ),
                     ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dio/dio.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:miniproj2/meetup.dart';
 import 'database_services.dart';
 import 'package:dart_numerics/dart_numerics.dart' as numerics;
 import 'package:google_map_polyline/google_map_polyline.dart';
@@ -101,7 +102,11 @@ class _MapsState extends State<Maps> {
         .then((querySnapshot) async {
       querySnapshot.docs.forEach((element) async {
         await _userRef.doc(element.id).get().then((value) {
-          Map m = {'dname': value.data()['dname'], 'loc': value.data()['loc']};
+          Map m = {
+            'dname': value.data()['dname'],
+            'loc': value.data()['loc'],
+            'uid': element.id
+          };
           info.add(m);
         });
       });
@@ -314,13 +319,17 @@ class _MapsState extends State<Maps> {
     });
   }
 
-  void _onMeetupPressed() {}
+  void _onMeetupPressed() {
+    Navigator.of(context).push(
+        MaterialPageRoute(builder: (BuildContext context) => Meetup(infoSet)));
+  }
 
   //button for changing places.
   Widget button(Function function, IconData icon) {
     return Transform.scale(
       scale: .85,
       child: FloatingActionButton(
+        heroTag: null,
         onPressed: function,
         materialTapTargetSize: MaterialTapTargetSize.padded,
         backgroundColor: Colors.amber,

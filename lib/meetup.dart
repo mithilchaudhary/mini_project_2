@@ -5,38 +5,77 @@ import 'package:miniproj2/newschedule.dart';
 
 class Meetup extends StatefulWidget {
   final Set meetup;
-  Meetup(this.meetup);
+  final List matrix;
+  final List result;
+  Meetup(this.meetup, this.matrix, this.result);
   @override
-  _MeetupState createState() => _MeetupState(meetup);
+  _MeetupState createState() => _MeetupState(meetup, matrix, result);
 }
 
 class _MeetupState extends State<Meetup> {
   Set meetup;
-  _MeetupState(this.meetup);
+  QuerySnapshot qs;
+  var matrix;
+  var result;
+  _MeetupState(this.meetup, this.matrix, this.result);
   String uid = FirebaseAuth.instance.currentUser.uid;
-  FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  CollectionReference _userRef = FirebaseFirestore.instance.collection('users');
-
-  int done = 1;
+  int done = 0;
 
   Future getMeets() async {
-    await _firestore
-        .collection('friends')
+    qs = await FirebaseFirestore.instance
+        .collection('users')
         .doc(uid)
-        .collection('friends')
-        .get()
-        .then((querySnapshot) async {
-      querySnapshot.docs.forEach((element) async {
-        await _userRef.doc(element.id).get().then((value) {
-          //Map m = {'dname': value.data()['dname'], 'uid': element.id};
-          //info.add(m);
-          //print(m.toString());
-        });
-      });
-      done = 1;
-    });
+        .collection('meets')
+        .get();
 
+    done = 1;
     return null;
+  }
+
+  Widget listofmeets() {
+    return ListView.separated(
+        itemBuilder: (BuildContext context, int index) {
+          return Card(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                ListTile(
+                  leading: Icon(
+                    Icons.calendar_today,
+                    color: Colors.amber,
+                  ),
+                  title: Text('Meeting at: ' +
+                      qs.docs[index]['rname'].toString() +
+                      '\nAddress: ' +
+                      qs.docs[index]['address'] +
+                      '\nDate & Time: ' +
+                      qs.docs[index]['date'].toDate().toString()),
+                  subtitle:
+                      Text('Invited: ' + qs.docs[index]['invited'].toString()),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    TextButton(
+                        child: const Text('Cancel'),
+                        onPressed: () async {
+                          await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(uid)
+                              .collection('meets')
+                              .doc(qs.docs[index].id)
+                              .delete();
+                          setState(() {});
+                        }),
+                    const SizedBox(width: 8),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+        separatorBuilder: (BuildContext context, int index) => Divider(),
+        itemCount: qs.docs.length);
   }
 
   @override
@@ -50,7 +89,8 @@ class _MeetupState extends State<Meetup> {
           padding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
           onPressed: () {
             Navigator.of(context).push(MaterialPageRoute(
-                builder: (BuildContext context) => NewSchedule(meetup)));
+                builder: (BuildContext context) =>
+                    NewSchedule(meetup, matrix, result)));
           },
           child: Text(
             "Schedule a New Meetup",
@@ -88,33 +128,9 @@ class _MeetupState extends State<Meetup> {
                               color: Colors.white, fontWeight: FontWeight.bold),
                         )),
                       ),
-                      Card(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            const ListTile(
-                              leading: Icon(
-                                Icons.calendar_today,
-                                color: Colors.amber,
-                              ),
-                              title: Text(
-                                  'Meeting at: chirag restaurant\nAddress:chirag road,chirag(w),pincode-chirag'),
-                              subtitle:
-                                  Text('Invited: maniac1, maniac2, maniac3'),
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: <Widget>[
-                                TextButton(
-                                  child: const Text('Cancel'),
-                                  onPressed: () {/* ... */},
-                                ),
-                                const SizedBox(width: 8),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                      qs.docs.length != 0
+                          ? Expanded(child: listofmeets())
+                          : null,
                     ],
                   )
                 : Center(

@@ -323,8 +323,8 @@ class _MapsState extends State<Maps> {
   }
 
   void _onMeetupPressed() {
-    Navigator.of(context).push(
-        MaterialPageRoute(builder: (BuildContext context) => Meetup(infoSet)));
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (BuildContext context) => Meetup(infoSet, matrix, result)));
   }
 
   //button for changing places.
@@ -412,7 +412,7 @@ class _MapsState extends State<Maps> {
                               materialTapTargetSize:
                                   MaterialTapTargetSize.padded,
                               backgroundColor: Colors.blue,
-                              label: Text('Plan Meet-Up'),
+                              label: Text('Your Meetups'),
                             ),
                           )
                         ],
